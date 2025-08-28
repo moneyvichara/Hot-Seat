@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Money Vichara Hot Seat</title>
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    color: white;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.game-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.header {
+    background: linear-gradient(90deg, #ff6b35, #f7931e);
+    padding: 8px 15px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 20px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+}
+
+.score, .timer, .question-counter {
+    font-size: 16px;
+    font-weight: bold;
+    padding: 5px 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 20px;
+    border: 2px solid #ff6b35;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    padding: 8px 15px;
+    gap: 15px;
+}
+
+.question-area {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.question-box {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 2px solid #ff6b35;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.question {
+    font-size: 26px;
+    line-height: 1.4;
+    font-weight: bold;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 800px;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.option {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border: 2px solid #4a90e2;
+    border-radius: 15px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: left;
+}
+
+.option:hover:not(.disabled):not(.option-disabled) {
+    background: rgba(74, 144, 226, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+}
+
+.option.selected {
+    background: rgba(255, 107, 53, 0.4);
+    border-color: #ff6b35;
+}
+
+.option.correct {
+    background: rgba(46, 204, 113, 0.4);
+    border-color: #2ecc71;
+}
+
+.option.incorrect {
+    background: rgba(231, 76, 60, 0.4);
+    border-color: #e74c3c;
+}
+
+.option.disabled, .option.option-disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.sidebar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.score-ladder {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 15px;
+    border: 2px solid #ff6b35;
+    /* Removed max-height and overflow-y for full visibility */
+}
+
+.ladder-item {
+    padding: 8px 15px;
+    margin: 4px 0;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 17px;
+    font-weight: bold;
+}
+
+.ladder-item.current {
+    background: rgba(255, 107, 53, 0.4);
+    border-color: #ff6b35;
+    font-weight: bold;
+}
+
+.ladder-item.completed {
+    background: rgba(46, 204, 113, 0.3);
+    border-color: #2ecc71;
+}
+
+.lifelines-horizontal {
+    margin: 15px 0 10px 0;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 10px;
+    border: 2px solid #ff6b35;
+}
+
+.lifelines-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.lifeline {
+    background: rgba(74, 144, 226, 0.3);
+    border: 2px solid #4a90e2;
+    border-radius: 10px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    min-width: 130px;
+    user-select: none;
+}
+
+.lifeline:not(.used):not(.disabled):hover {
+    background: rgba(74, 144, 226, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(74, 144, 226, 0.4);
+}
+
+.lifeline.used {
+    background: rgba(100, 100, 100, 0.3) !important;
+    border-color: #666 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+    color: #ccc !important;
+    pointer-events: none !important;
+}
+
+.lifeline.disabled {
+    background: rgba(60, 60, 60, 0.3) !important;
+    border-color: #444 !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+    color: #999 !important;
+    pointer-events: none !important;
+}
+
+.lifeline.available {
+    background: rgba(255, 107, 53, 0.4);
+    border-color: #ff6b35;
+    animation: pulse-available 2s infinite;
+    cursor: pointer;
+}
+
+@keyframes pulse-available {
+    0% { box-shadow: 0 0 5px rgba(255, 107, 53, 0.5); }
+    50% { box-shadow: 0 0 15px rgba(255, 107, 53, 0.8); }
+    100% { box-shadow: 0 0 5px rgba(255, 107, 53, 0.5); }
+}
+
+.controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #ff6b35, #f7931e);
+    color: white;
+}
+
+.btn-secondary {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 2px solid #4a90e2;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.start-screen, .end-screen, .decision-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    text-align: center;
+}
+
+.start-title {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    background: linear-gradient(45deg, #ff6b35, #f7931e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.start-subtitle {
+    font-size: 24px;
+    margin-bottom: 30px;
+    color: #ccc;
+}
+
+.rules {
+    max-width: 800px;
+    text-align: left;
+    margin: 20px 0;
+    padding: 20px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 15px;
+    line-height: 1.6;
+}
+
+.upload-section {
+    background: rgba(255,255,255,0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    max-width: 600px;
+    border: 2px dashed #ff6b35;
+}
+
+.file-input {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ff6b35;
+    border-radius: 5px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    width: 100%;
+}
+
+.timer.warning {
+    animation: pulse 1s infinite;
+    background: rgba(231, 76, 60, 0.3);
+    border-color: #e74c3c;
+}
+
+.timer.extended {
+    background: rgba(46, 204, 113, 0.3);
+    border-color: #2ecc71;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.level-indicator {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    color: #ff6b35;
+    margin-bottom: 10px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.round-info {
+    background: rgba(255, 107, 53, 0.2);
+    border: 2px solid #ff6b35;
+    border-radius: 10px;
+    padding: 12px;
+    margin: 10px 0;
+    text-align: center;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.decision-box {
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 40px;
+    border: 2px solid #ff6b35;
+    max-width: 600px;
+}
+
+.decision-timer {
+    font-size: 36px;
+    color: #ff6b35;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.validation-message {
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.success {
+    background: rgba(46, 204, 113, 0.3);
+    border: 1px solid #2ecc71;
+    color: #2ecc71;
+}
+
+.error {
+    background: rgba(231, 76, 60, 0.3);
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+}
+
+.notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: rgba(46, 204, 113, 0.95);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-weight: bold;
+    z-index: 2000;
+    animation: slideIn 0.5s ease-out;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    max-width: 300px;
+}
+
+.notification.error {
+    background: rgba(231, 76, 60, 0.95);
+}
+
+@keyframes slideIn {
+    from { 
+        transform: translateX(100%); 
+        opacity: 0; 
+    }
+    to { 
+        transform: translateX(0); 
+        opacity: 1; 
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Start Screen -->
+        <div class="start-screen" id="startScreen">
+            <h1 class="start-title">Money Vichara Hot Seat</h1>
+            <p class="start-subtitle">The Quiz Ladder - Answer, Advance, Achieve - Kaun Banega Champion?</p>
+             
+            
+            <div class="rules">
+                <h3 style="color: #ff6b35; margin-bottom: 15px;">Championship Rules (Total 200 Points ):</h3>
+                <ul style="list-style: none; padding: 0; font-size: 15px;">
+                    <ul>
+    <li>🎯 <strong>15 Elite Questions</strong> in 4 progressive levels, total <strong>30–35 mins</strong>; safe scores at <strong>15 → 55 → 130</strong>.</li>
+    <li>💯 <strong>Max Score:</strong> 200 points (190 + bonus); 🎁 +10 points for each unused lifeline.</li>
+    <li>🏆 <strong>Scoring:</strong> Level 1 (Q1 to Q3): 5 points, Level 2 (Q4 to Q7): 10 points, Level 3 (Q8 to Q12): 15 points, Level 4 (Q13 to Q15): 20 points.</li>
+    <li>🆘 <strong>3 Lifelines:</strong> Change Question (Level 1 & 2), 50:50 (Level 1 & 2), Time Extension +2 min (unlocks Level 3).</li>
+    <li>🚪 <strong>Quit:</strong> Allowed in Level 1 to Level 3; ⚡ Level 4 wrong answer drops to <strong>55 points</strong>.</li>
+    <li>⏱ <strong>Time per question:</strong> 45s → 60s → 75s → 90s; <strong>2-min break after Level 3</strong> for risk decision.</li>
+</ul>
+
+            </div>
+            <button class="btn btn-primary" onclick="startGame()">START CHAMPIONSHIP</button>
+<!-- Upload Section -->
+            <div class="upload-section">
+                <h3 style="color: #ff6b35; margin-bottom: 15px;">📁 Custom Questions (Optional)</h3>
+                <p style="margin-bottom: 10px; font-size: 14px;">Upload your own questions via CSV file or play with default questions</p>
+                <input type="file" id="csvFile" accept=".csv" class="file-input">
+                <div id="uploadStatus"></div>
+                <button class="btn btn-secondary" onclick="downloadTemplate()" style="margin-top: 10px; padding: 8px 16px; font-size: 12px;">
+                    📥 Download CSV Template
+                </button>
+            </div>
+<p class="start-subtitle">Game Designed by Vishweshwar Mensumane - https://moneyvichara.blogspot.com</p>
+        </div>
+
+        <!-- Decision Screen -->
+        <div class="decision-screen hidden" id="decisionScreen">
+            <div class="decision-box">
+                <h2 style="color: #ff6b35; margin-bottom: 20px;">🚨 FINAL DECISION TIME</h2>
+                <p style="font-size: 18px; margin-bottom: 20px;">You've completed Round 3!</p>
+                <div style="font-size: 24px; margin: 20px 0;">
+                    Current Safe Score: <span style="color: #2ecc71; font-weight: bold;">130 Points</span>
+                </div>
+                <div class="decision-timer" id="decisionTimer">2:00</div>
+                <div style="margin: 30px 0;">
+                    <div style="border: 2px solid #2ecc71; border-radius: 10px; padding: 15px; margin: 10px 0; background: rgba(46, 204, 113, 0.1);">
+                        <strong>QUIT SAFELY:</strong> Keep 130 points guaranteed
+                    </div>
+                    <div style="border: 2px solid #ff6b35; border-radius: 10px; padding: 15px; margin: 10px 0; background: rgba(255, 107, 53, 0.1);">
+                        <strong>RISK ROUND 4:</strong> Win 200 points OR drop to 55 points
+                    </div>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-secondary" onclick="quitSafely()" id="quitSafeBtn">QUIT SAFELY (130 pts)</button>
+                    <button class="btn btn-primary" onclick="riskRound4()" id="riskBtn">RISK ROUND 4</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- End Screen -->
+        <div class="end-screen hidden" id="endScreen">
+            <h1 class="start-title">Championship Over!</h1>
+            <div id="finalScore" class="start-subtitle"></div>
+            <div id="gameResult" class="rules"></div>
+            <!button class="btn btn-primary" onclick="restartGame()">PLAY AGAIN</button>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">Kaun Banega Champion</div>
+        </div>
+
+        <!-- Game Info -->
+        <div class="game-info">
+            <div class="score">Score: <span id="currentScore">0</span></div>
+            <div class="timer" id="timer">Time: 45s</div>
+            <div class="question-counter">Question: <span id="questionNum">1</span>/15</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Question Area -->
+            <div class="question-area">
+                <div class="level-indicator" id="levelIndicator">Round 1: Foundation (5 points each)</div>
+                <div class="question-box">
+                    <div class="question" id="questionText">Loading...</div>
+                </div>
+                <div class="options-grid" id="optionsGrid">
+                    <!-- Options will be populated by JavaScript -->
+                </div>
+                
+                <!-- Lifelines Section -->
+                <div class="lifelines-horizontal">
+                    <h3 style="color: #ff6b35; margin-bottom: 10px;">Lifelines Available:</h3>
+                    <div class="lifelines-row">
+                        <button class="lifeline" id="changeQuestionBtn">
+                            🔄 Change Question
+                        </button>
+                        <button class="lifeline" id="fiftyFiftyBtn">
+                            💡 50:50
+                        </button>
+                        <button class="lifeline" id="timeExtensionBtn">
+                            ⏰ Time Extension<br><small>(Available Round 3)</small>
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-secondary" id="quitBtn" onclick="quitGame()">QUIT GAME</button>
+                    <button class="btn btn-primary" id="confirmBtn" onclick="confirmAnswer()" disabled>LOCK ANSWER</button>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Score Ladder -->
+                <div class="score-ladder">
+                    <h3 style="margin-bottom: 15px; color: #ff6b35;">Prize Ladder</h3>
+                    <div class="ladder-item" data-question="15"><span>Q15</span><span>200 Points</span></div>
+                    <div class="ladder-item" data-question="14"><span>Q14</span><span>180 Points</span></div>
+                    <div class="ladder-item" data-question="13"><span>Q13</span><span>160 Points</span></div>
+                    <div class="ladder-item" data-question="12"><span>Q12</span><span>130 Points 🔒</span></div>
+                    <div class="ladder-item" data-question="11"><span>Q11</span><span>115 Points</span></div>
+                    <div class="ladder-item" data-question="10"><span>Q10</span><span>100 Points</span></div>
+                    <div class="ladder-item" data-question="9"><span>Q9</span><span>85 Points</span></div>
+                    <div class="ladder-item" data-question="8"><span>Q8</span><span>70 Points</span></div>
+                    <div class="ladder-item" data-question="7"><span>Q7</span><span>55 Points 🔒</span></div>
+                    <div class="ladder-item" data-question="6"><span>Q6</span><span>45 Points</span></div>
+                    <div class="ladder-item" data-question="5"><span>Q5</span><span>35 Points</span></div>
+                    <div class="ladder-item" data-question="4"><span>Q4</span><span>25 Points</span></div>
+                    <div class="ladder-item" data-question="3"><span>Q3</span><span>15 Points 🔒</span></div>
+                    <div class="ladder-item" data-question="2"><span>Q2</span><span>10 Points</span></div>
+                    <div class="ladder-item current" data-question="1"><span>Q1</span><span>5 Points</span></div>
+                </div>
+
+                <!-- Round Info -->
+                <div class="round-info" id="roundInfo">
+                    Round 1: Foundation<br>
+                    5 points per question<br>
+                    Basic lifelines available
+                </div>
+            </div>
+        </div>
+<p class="start-subtitle">Game Designed by Vishweshwar Mensumane - https://moneyvichara.blogspot.com</p>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            currentQuestion: 1,
+            score: 0,
+            timeLeft: 45,
+            gameStarted: false,
+            gameEnded: false,
+            selectedAnswer: null,
+            timer: null,
+            decisionTimer: null,
+            lifelines: {
+                changeQuestion: true,
+                fiftyFifty: true,
+                timeExtension: true
+            },
+            currentRound: 1,
+            timeExtended: false,
+            customQuestions: null,
+            answerLocked: false
+        };
+
+        // Scoring system for 15 questions
+        const scoreValues = [5, 10, 15, 25, 35, 45, 55, 70, 85, 100, 115, 130, 160, 180, 200];
+
+        // Default 15 elite business questions
+        const defaultQuestions = [
+            // Round 1: Foundation (Q1-3) - 45 seconds each, 5 points
+            {
+                question: "Which Indian company became the first to cross ₹1 trillion market cap in 2019?",
+                options: ["Tata Consultancy Services", "Reliance Industries", "HDFC Bank", "Infosys"],
+                correct: 0,
+                round: 1,
+                timeLimit: 45
+            },
+            {
+                question: "What is the primary business model of Zomato and Swiggy?",
+                options: ["B2B marketplace", "Platform-as-a-Service", "Two-sided marketplace", "Direct-to-Consumer"],
+                correct: 2,
+                round: 1,
+                timeLimit: 45
+            },
+            {
+                question: "Which financial metric is most commonly used to value startups in early stages?",
+                options: ["P/E Ratio", "Revenue Multiple", "EBITDA Multiple", "Price-to-Sales Ratio"],
+                correct: 1,
+                round: 1,
+                timeLimit: 45
+            },
+            // Round 2: Intermediate (Q4-7) - 60 seconds each, 10 points
+            {
+                question: "Tesla's business strategy primarily focuses on which competitive advantage?",
+                options: ["Cost Leadership", "Vertical Integration", "Network Effects", "Brand Premium"],
+                correct: 1,
+                round: 2,
+                timeLimit: 60
+            },
+            {
+                question: "What was the key reason behind WeWork's failed IPO in 2019?",
+                options: ["Market competition", "Corporate governance issues", "Technology problems", "Legal disputes"],
+                correct: 1,
+                round: 2,
+                timeLimit: 60
+            },
+            {
+                question: "Which strategy did Netflix use to disrupt the traditional TV industry?",
+                options: ["Price penetration", "Content aggregation", "Original content creation", "Technology innovation"],
+                correct: 2,
+                round: 2,
+                timeLimit: 60
+            },
+            {
+                question: "What is the primary business model that made Uber successful globally?",
+                options: ["Asset-light platform", "Direct employment", "Franchise model", "Subscription service"],
+                correct: 0,
+                round: 2,
+                timeLimit: 60
+            },
+            // Round 3: Advanced (Q8-12) - 75 seconds each, 15 points
+            {
+                question: "What is the primary challenge with India's Digital Rupee (CBDC) adoption?",
+                options: ["Technical infrastructure", "User privacy concerns", "Banking system integration", "Regulatory compliance"],
+                correct: 1,
+                round: 3,
+                timeLimit: 75
+            },
+            {
+                question: "Which factor most significantly impacts India's Ease of Doing Business ranking?",
+                options: ["Tax compliance", "Contract enforcement", "Starting a business", "Getting electricity"],
+                correct: 1,
+                round: 3,
+                timeLimit: 75
+            },
+            {
+                question: "What is the main risk in ESG investing for emerging markets like India?",
+                options: ["Data availability", "Regulatory changes", "Currency fluctuation", "Political instability"],
+                correct: 0,
+                round: 3,
+                timeLimit: 75
+            },
+            {
+                question: "Which Indian fintech company pioneered the 'Buy Now Pay Later' model?",
+                options: ["Paytm", "LazyPay", "Simpl", "ZestMoney"],
+                correct: 2,
+                round: 3,
+                timeLimit: 75
+            },
+            {
+                question: "What is the primary driver of India's unicorn startup ecosystem growth?",
+                options: ["Government funding", "Foreign investment", "Digital adoption", "Regulatory support"],
+                correct: 2,
+                round: 3,
+                timeLimit: 75
+            },
+            // Round 4: Expert (Q13-15) - 90 seconds each, 20 points
+            {
+                question: "Which factor poses the biggest systemic risk to India's banking sector post-COVID?",
+                options: ["NPA increases", "Digital disruption", "Regulatory changes", "Capital adequacy"],
+                correct: 0,
+                round: 4,
+                timeLimit: 90
+            },
+            {
+                question: "What is the critical challenge in India's transition to electric vehicles by 2030?",
+                options: ["Battery technology", "Charging infrastructure", "Consumer adoption", "Policy implementation"],
+                correct: 1,
+                round: 4,
+                timeLimit: 90
+            },
+            {
+                question: "Which emerging technology will most significantly impact India's manufacturing sector?",
+                options: ["Artificial Intelligence", "Internet of Things", "Blockchain", "Robotics"],
+                correct: 1,
+                round: 4,
+                timeLimit: 90
+            }
+        ];
+
+        // Alternative questions for change question lifeline
+        const alternativeQuestions = [
+            // Round 1 alternatives
+            {
+                question: "What does SEBI stand for in Indian financial markets?",
+                options: ["Securities Exchange Board of India", "Stock Exchange Bureau of India", "Securities and Exchange Board of India", "Stock and Exchange Bureau of India"],
+                correct: 2,
+                round: 1,
+                timeLimit: 45
+            },
+            {
+                question: "Which Indian unicorn was valued highest in 2021?",
+                options: ["Byju's", "Paytm", "Ola", "Flipkart"],
+                correct: 0,
+                round: 1,
+                timeLimit: 45
+            },
+            {
+                question: "What is the main revenue source for Google's parent company Alphabet?",
+                options: ["Cloud services", "Hardware sales", "Advertising", "Software licensing"],
+                correct: 2,
+                round: 1,
+                timeLimit: 45
+            },
+            // Round 2 alternatives
+            {
+                question: "Which strategy did Amazon use to dominate cloud computing?",
+                options: ["First mover advantage", "Price competition", "Vertical integration", "Network effects"],
+                correct: 0,
+                round: 2,
+                timeLimit: 60
+            },
+            {
+                question: "What is the primary reason for Flipkart's early success over Amazon in India?",
+                options: ["Better pricing", "Local market understanding", "Superior technology", "Government support"],
+                correct: 1,
+                round: 2,
+                timeLimit: 60
+            },
+            {
+                question: "Which business model innovation made Airbnb successful?",
+                options: ["Subscription model", "Asset-light platform", "Franchise model", "Freemium model"],
+                correct: 1,
+                round: 2,
+                timeLimit: 60
+            },
+            {
+                question: "What is the key challenge in India's digital payment ecosystem?",
+                options: ["Technology infrastructure", "User adoption", "Regulatory compliance", "Interoperability"],
+                correct: 3,
+                round: 2,
+                timeLimit: 60
+            },
+            // Round 3 alternatives
+            {
+                question: "What is the biggest challenge for Indian companies in global supply chain management post-COVID?",
+                options: ["Cost optimization", "Supply chain resilience", "Digital transformation", "Regulatory compliance"],
+                correct: 1,
+                round: 3,
+                timeLimit: 75
+            },
+            {
+                question: "Which factor most influences India's corporate bond market development?",
+                options: ["Credit rating agencies", "Institutional investors", "Regulatory framework", "Market liquidity"],
+                correct: 2,
+                round: 3,
+                timeLimit: 75
+            },
+            {
+                question: "What is the key driver of India's fintech revolution?",
+                options: ["UPI infrastructure", "Mobile penetration", "Digital literacy", "Government initiatives"],
+                correct: 0,
+                round: 3,
+                timeLimit: 75
+            },
+            {
+                question: "Which business model is most sustainable for Indian e-commerce platforms?",
+                options: ["Marketplace model", "Inventory model", "Hybrid model", "Subscription model"],
+                correct: 2,
+                round: 3,
+                timeLimit: 75
+            },
+            {
+                question: "What is the primary risk factor in India's startup funding ecosystem?",
+                options: ["Market volatility", "Regulatory changes", "Valuation bubbles", "Competition"],
+                correct: 2,
+                round: 3,
+                timeLimit: 75
+            }
+        ];
+
+        let currentQuestions = [...defaultQuestions];
+
+        // Utility function to show notifications
+        function showNotification(message, isError = false) {
+            // Remove any existing notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notification => notification.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${isError ? 'error' : ''}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification && notification.parentNode) {
+                    notification.remove();
+                }
+            }, 4000);
+        }
+
+        // CSV handling functions
+        function downloadTemplate() {
+            const csvContent = `question,option_a,option_b,option_c,option_d,correct_answer,round,time_limit
+"Which Indian company became the first to cross ₹1 trillion market cap?","Tata Consultancy Services","Reliance Industries","HDFC Bank","Infosys",0,1,45
+"What is the primary business model of Zomato and Swiggy?","B2B marketplace","Platform-as-a-Service","Two-sided marketplace","Direct-to-Consumer",2,1,45
+"Which financial metric is used to value early-stage startups?","P/E Ratio","Revenue Multiple","EBITDA Multiple","Price-to-Sales Ratio",1,1,45
+"Tesla's business strategy focuses on which competitive advantage?","Cost Leadership","Vertical Integration","Network Effects","Brand Premium",1,2,60
+"What was the key reason behind WeWork's failed IPO in 2019?","Market competition","Corporate governance issues","Technology problems","Legal disputes",1,2,60
+"Which strategy did Netflix use to disrupt traditional TV?","Price penetration","Content aggregation","Original content creation","Technology innovation",2,2,60
+"What is Uber's primary business model advantage?","Asset-light platform","Direct employment","Franchise model","Subscription service",0,2,60
+"What is the primary challenge with India's Digital Rupee adoption?","Technical infrastructure","User privacy concerns","Banking integration","Regulatory compliance",1,3,75
+"Which factor impacts India's Ease of Doing Business ranking most?","Tax compliance","Contract enforcement","Starting a business","Getting electricity",1,3,75
+"What is the main risk in ESG investing for emerging markets?","Data availability","Regulatory changes","Currency fluctuation","Political instability",0,3,75
+"Which Indian fintech pioneered Buy Now Pay Later model?","Paytm","LazyPay","Simpl","ZestMoney",2,3,75
+"What drives India's unicorn startup ecosystem growth?","Government funding","Foreign investment","Digital adoption","Regulatory support",2,3,75
+"Which factor poses biggest systemic risk to Indian banking post-COVID?","NPA increases","Digital disruption","Regulatory changes","Capital adequacy",0,4,90
+"What is the critical challenge in India's EV transition by 2030?","Battery technology","Charging infrastructure","Consumer adoption","Policy implementation",1,4,90
+"Which technology will most impact India's manufacturing sector?","Artificial Intelligence","Internet of Things","Blockchain","Robotics",1,4,90`;
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            if (navigator.msSaveBlob) {
+                navigator.msSaveBlob(blob, 'kbc_mba_questions_template.csv');
+            } else {
+                const url = URL.createObjectURL(blob);
+                link.href = url;
+                link.download = 'kbc_mba_questions_template.csv';
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+            
+            showValidationMessage('✅ CSV template downloaded successfully!', 'success');
+        }
+
+        // CSV file handling with proper error checking
+        document.addEventListener('DOMContentLoaded', function() {
+            const csvFileInput = document.getElementById('csvFile');
+            if (csvFileInput) {
+                csvFileInput.addEventListener('change', function(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        if (!file.name.toLowerCase().endsWith('.csv')) {
+                            showValidationMessage('❌ Please select a CSV file only.', 'error');
+                            return;
+                        }
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            try {
+                                parseCSV(e.target.result);
+                            } catch (error) {
+                                showValidationMessage('❌ Error reading file: ' + error.message, 'error');
+                            }
+                        };
+                        reader.onerror = function() {
+                            showValidationMessage('❌ Error reading the selected file.', 'error');
+                        };
+                        reader.readAsText(file);
+                    }
+                });
+            }
+
+            // Initialize lifelines with proper event listeners
+            initializeLifelines();
+        });
+
+        function parseCSV(csvText) {
+            if (!csvText || csvText.trim().length === 0) {
+                showValidationMessage('❌ CSV file is empty.', 'error');
+                return;
+            }
+
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 16) {
+                showValidationMessage('❌ CSV must contain at least 15 questions (16 lines including header)', 'error');
+                return;
+            }
+
+            const headerLine = lines[0];
+            const headers = parseCSVLine(headerLine);
+
+            const requiredHeaders = ['question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'round', 'time_limit'];
+            
+            const missingHeaders = requiredHeaders.filter(h => !headers.map(header => header.toLowerCase().trim()).includes(h));
+            if (missingHeaders.length > 0) {
+                showValidationMessage('❌ Missing required columns: ' + missingHeaders.join(', '), 'error');
+                return;
+            }
+
+            const questions = [];
+            const roundCounts = [0, 0, 0, 0];
+
+            for (let i = 1; i < lines.length && questions.length < 15; i++) {
+                try {
+                    const values = parseCSVLine(lines[i]);
+                    if (values.length < requiredHeaders.length) {
+                        console.warn(`Skipping line ${i + 1}: insufficient columns`);
+                        continue;
+                    }
+
+                    const question = {
+                        question: cleanText(values[0]),
+                        options: [
+                            cleanText(values[1]),
+                            cleanText(values[2]),
+                            cleanText(values[3]),
+                            cleanText(values[4])
+                        ],
+                        correct: parseInt(cleanText(values[5])),
+                        round: parseInt(cleanText(values[6])),
+                        timeLimit: parseInt(cleanText(values[7]))
+                    };
+
+                    // Validation
+                    if (!question.question || question.question.length < 10) {
+                        showValidationMessage(`❌ Invalid question in line ${i + 1}: too short`, 'error');
+                        return;
+                    }
+
+                    if (question.options.some(opt => !opt || opt.length < 2)) {
+                        showValidationMessage(`❌ Invalid options in line ${i + 1}: options too short`, 'error');
+                        return;
+                    }
+
+                    if (isNaN(question.correct) || question.correct < 0 || question.correct > 3) {
+                        showValidationMessage(`❌ Invalid correct answer in line ${i + 1}: must be 0-3`, 'error');
+                        return;
+                    }
+                    
+                    if (isNaN(question.round) || question.round < 1 || question.round > 4) {
+                        showValidationMessage(`❌ Invalid round in line ${i + 1}: must be 1-4`, 'error');
+                        return;
+                    }
+                    
+                    if (isNaN(question.timeLimit) || question.timeLimit < 15 || question.timeLimit > 300) {
+                        showValidationMessage(`❌ Invalid time limit in line ${i + 1}: must be 15-300 seconds`, 'error');
+                        return;
+                    }
+
+                    questions.push(question);
+                    roundCounts[question.round - 1]++;
+                } catch (error) {
+                    console.warn(`Error parsing line ${i + 1}:`, error);
+                    continue;
+                }
+            }
+
+            if (questions.length < 15) {
+                showValidationMessage(`❌ Need at least 15 valid questions, found only ${questions.length}`, 'error');
+                return;
+            }
+
+            const expectedCounts = [3, 4, 5, 3];
+            for (let i = 0; i < 4; i++) {
+                if (roundCounts[i] < expectedCounts[i]) {
+                    showValidationMessage(`❌ Round ${i + 1} needs at least ${expectedCounts[i]} questions, found ${roundCounts[i]}`, 'error');
+                    return;
+                }
+            }
+
+            const finalQuestions = [];
+            
+            for (let round = 1; round <= 4; round++) {
+                const roundQuestions = questions.filter(q => q.round === round);
+                const needed = expectedCounts[round - 1];
+                finalQuestions.push(...roundQuestions.slice(0, needed));
+            }
+
+            gameState.customQuestions = finalQuestions;
+            currentQuestions = [...gameState.customQuestions];
+            showValidationMessage(`✅ Successfully loaded ${finalQuestions.length} custom questions! Ready to play with your questions.`, 'success');
+        }
+
+        function parseCSVLine(line) {
+            const values = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    values.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            values.push(current);
+            return values;
+        }
+
+        function cleanText(text) {
+            return text.trim().replace(/^"/, '').replace(/"$/, '');
+        }
+
+        function showValidationMessage(message, type) {
+            const statusDiv = document.getElementById('uploadStatus');
+            if (statusDiv) {
+                statusDiv.innerHTML = `<div class="validation-message ${type}">${message}</div>`;
+                setTimeout(() => {
+                    statusDiv.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        // Game initialization and flow
+        function startGame() {
+            // Clear any existing timers
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+                gameState.timer = null;
+            }
+            if (gameState.decisionTimer) {
+                clearInterval(gameState.decisionTimer);
+                gameState.decisionTimer = null;
+            }
+
+            document.getElementById('startScreen').classList.add('hidden');
+            
+            // Reset game state completely
+            gameState = {
+                currentQuestion: 1,
+                score: 0,
+                timeLeft: currentQuestions[0].timeLimit,
+                gameStarted: true,
+                gameEnded: false,
+                selectedAnswer: null,
+                timer: null,
+                decisionTimer: null,
+                lifelines: {
+                    changeQuestion: true,
+                    fiftyFifty: true,
+                    timeExtension: true
+                },
+                currentRound: 1,
+                timeExtended: false,
+                customQuestions: gameState.customQuestions,
+                answerLocked: false
+            };
+            
+            displayQuestion();
+            updateUI();
+            updateLifelineAvailability();
+            startTimer();
+        }
+
+        // Current round calculation
+        function getCurrentRound() {
+            if (gameState.currentQuestion <= 3) return 1;
+            if (gameState.currentQuestion <= 7) return 2;
+            if (gameState.currentQuestion <= 12) return 3;
+            return 4;
+        }
+
+        // Display question with proper cleanup
+        function displayQuestion() {
+            if (!gameState.gameStarted || gameState.gameEnded) return;
+
+            const currentQ = currentQuestions[gameState.currentQuestion - 1];
+            if (!currentQ) {
+                console.error('No question found for index:', gameState.currentQuestion - 1);
+                return;
+            }
+
+            const currentRound = getCurrentRound();
+            gameState.currentRound = currentRound;
+            gameState.answerLocked = false;
+            
+            document.getElementById('questionText').textContent = currentQ.question;
+            
+            const optionsGrid = document.getElementById('optionsGrid');
+            optionsGrid.innerHTML = '';
+            
+            currentQ.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                optionDiv.innerHTML = `<strong>${String.fromCharCode(65 + index)}.</strong> ${option}`;
+                optionDiv.addEventListener('click', () => selectAnswer(index));
+                optionDiv.setAttribute('data-index', index);
+                optionsGrid.appendChild(optionDiv);
+            });
+
+            // Update level indicator and round info
+            const roundNames = ["Foundation", "Intermediate", "Advanced", "Expert"];
+            const roundPoints = [5, 10, 15, 20];
+            document.getElementById('levelIndicator').textContent = `Round ${currentRound}: ${roundNames[currentRound - 1]} (${roundPoints[currentRound - 1]} points each)`;
+            
+            // Update round info
+            let roundInfoText = `Round ${currentRound}: ${roundNames[currentRound - 1]}<br>${roundPoints[currentRound - 1]} points per question<br>`;
+            if (currentRound === 4) {
+                roundInfoText += "⚠️ NO QUIT OPTION<br>⚠️ Wrong = 55 pts penalty!";
+            } else if (currentRound === 3) {
+                roundInfoText += "⏰ Time Extension Available<br>🚪 Last chance to quit";
+            } else {
+                roundInfoText += "🆘 Basic lifelines available";
+            }
+            document.getElementById('roundInfo').innerHTML = roundInfoText;
+            
+            // Reset UI state
+            gameState.selectedAnswer = null;
+            document.getElementById('confirmBtn').disabled = true;
+            
+            if (!gameState.timeExtended) {
+                gameState.timeLeft = currentQ.timeLimit;
+            }
+            
+            updateLifelineAvailability();
+            updateTimer();
+        }
+
+        // FIXED: Lifeline initialization with proper event handling
+        function initializeLifelines() {
+            console.log('Initializing lifelines...');
+            
+            // Get lifeline buttons
+            const changeQuestionBtn = document.getElementById('changeQuestionBtn');
+            const fiftyFiftyBtn = document.getElementById('fiftyFiftyBtn');
+            const timeExtensionBtn = document.getElementById('timeExtensionBtn');
+
+            // Add event listeners with proper binding
+            if (changeQuestionBtn) {
+                changeQuestionBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Change Question button clicked');
+                    useChangeQuestion();
+                });
+            }
+            
+            if (fiftyFiftyBtn) {
+                fiftyFiftyBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('50:50 button clicked');
+                    useFiftyFifty();
+                });
+            }
+            
+            if (timeExtensionBtn) {
+                timeExtensionBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Time Extension button clicked');
+                    useTimeExtension();
+                });
+            }
+
+            console.log('Lifelines initialized successfully');
+        }
+
+        // FIXED: Change Question lifeline
+        function useChangeQuestion() {
+            console.log('useChangeQuestion called, current round:', gameState.currentRound);
+            console.log('Lifeline state:', gameState.lifelines.changeQuestion);
+            console.log('Game started:', gameState.gameStarted);
+            console.log('Game ended:', gameState.gameEnded);
+            
+            if (!isLifelineUsable('changeQuestion', [1, 2])) {
+                console.log('Change Question not usable');
+                return;
+            }
+            
+            if (!confirm("Are you sure you want to change this question? This lifeline can only be used once.")) {
+                return;
+            }
+            
+            // Mark lifeline as used
+            gameState.lifelines.changeQuestion = false;
+            
+            const currentRound = getCurrentRound();
+            const roundAlternatives = alternativeQuestions.filter(q => q.round === currentRound);
+            
+            console.log('Available alternatives for round', currentRound, ':', roundAlternatives.length);
+            
+            if (roundAlternatives.length > 0) {
+                const randomIndex = Math.floor(Math.random() * roundAlternatives.length);
+                const alternativeQ = roundAlternatives[randomIndex];
+                
+                console.log('Using alternative question:', alternativeQ.question);
+                
+                // Replace current question
+                currentQuestions[gameState.currentQuestion - 1] = alternativeQ;
+                
+                // Reset question state
+                if (gameState.timer) {
+                    clearInterval(gameState.timer);
+                }
+                gameState.timeExtended = false;
+                gameState.selectedAnswer = null;
+                gameState.answerLocked = false;
+                document.getElementById('confirmBtn').disabled = true;
+                
+                // Redisplay question
+                displayQuestion();
+                startTimer();
+                
+                showNotification("✅ Question changed successfully!");
+            } else {
+                showNotification("❌ No alternative questions available for this round!", true);
+                gameState.lifelines.changeQuestion = true; // Restore lifeline
+            }
+            
+            updateLifelineAvailability();
+        }
+
+        // FIXED: 50:50 lifeline
+        function useFiftyFifty() {
+            console.log('useFiftyFifty called, current round:', gameState.currentRound);
+            console.log('Lifeline state:', gameState.lifelines.fiftyFifty);
+            
+            if (!isLifelineUsable('fiftyFifty', [1, 2])) {
+                console.log('50:50 not usable');
+                return;
+            }
+            
+            if (!confirm("Are you sure you want to use 50:50? This lifeline can only be used once.")) {
+                return;
+            }
+            
+            // Mark lifeline as used
+            gameState.lifelines.fiftyFifty = false;
+            
+            const currentQ = currentQuestions[gameState.currentQuestion - 1];
+            const options = document.querySelectorAll('.option');
+            const incorrectIndices = [];
+            
+            // Find all incorrect option indices
+            for (let i = 0; i < options.length; i++) {
+                if (i !== currentQ.correct) {
+                    incorrectIndices.push(i);
+                }
+            }
+            
+            // Randomly select 2 incorrect options to hide
+            const shuffled = [...incorrectIndices].sort(() => Math.random() - 0.5);
+            const toHide = shuffled.slice(0, 2);
+            
+            console.log('Hiding options:', toHide);
+            
+            // Hide the selected incorrect options
+            toHide.forEach(index => {
+                const option = options[index];
+                if (option) {
+                    option.classList.add('option-disabled');
+                    option.style.opacity = '0.3';
+                    option.style.pointerEvents = 'none';
+                    
+                    // Clear selection if it was on a hidden option
+                    if (gameState.selectedAnswer === index) {
+                        gameState.selectedAnswer = null;
+                        document.getElementById('confirmBtn').disabled = true;
+                        option.classList.remove('selected');
+                    }
+                }
+            });
+            
+            updateLifelineAvailability();
+            showNotification("✅ 50:50 activated! Two incorrect options removed.");
+        }
+
+        // FIXED: Time Extension lifeline
+        function useTimeExtension() {
+            console.log('useTimeExtension called, current round:', gameState.currentRound);
+            console.log('Lifeline state:', gameState.lifelines.timeExtension);
+            
+            if (!isLifelineUsable('timeExtension', [3, 4])) {
+                console.log('Time Extension not usable');
+                return;
+            }
+            
+            if (!confirm("Are you sure you want to use Time Extension? This adds 2 minutes (120 seconds) to the current question.")) {
+                return;
+            }
+            
+            // Mark lifeline as used
+            gameState.lifelines.timeExtension = false;
+            
+            // Add 2 minutes (120 seconds)
+            gameState.timeLeft += 120;
+            gameState.timeExtended = true;
+            
+            const timerElement = document.getElementById('timer');
+            if (timerElement) {
+                timerElement.classList.add('extended');
+                timerElement.classList.remove('warning');
+            }
+            
+            updateTimer();
+            updateLifelineAvailability();
+            showNotification("✅ Time Extension activated! +2 minutes added to your timer.");
+        }
+
+        // FIXED: Lifeline validation helper
+        function isLifelineUsable(lifelineName, allowedRounds) {
+            console.log(`Checking ${lifelineName} usability:`, {
+                gameStarted: gameState.gameStarted,
+                gameEnded: gameState.gameEnded,
+                lifelineAvailable: gameState.lifelines[lifelineName],
+                currentRound: gameState.currentRound,
+                allowedRounds: allowedRounds,
+                answerLocked: gameState.answerLocked
+            });
+
+            if (!gameState.gameStarted || gameState.gameEnded) {
+                showNotification("❌ Game not in progress!", true);
+                return false;
+            }
+
+            if (!gameState.lifelines[lifelineName]) {
+                showNotification(`❌ ${lifelineName} lifeline has already been used!`, true);
+                return false;
+            }
+            
+            if (!allowedRounds.includes(gameState.currentRound)) {
+                showNotification(`❌ ${lifelineName} lifeline is not available in Round ${gameState.currentRound}!`, true);
+                return false;
+            }
+
+            if (gameState.answerLocked) {
+                showNotification("❌ Cannot use lifeline after locking answer!", true);
+                return false;
+            }
+
+            return true;
+        }
+
+        // FIXED: Lifeline availability display
+        function updateLifelineAvailability() {
+            const currentRound = gameState.currentRound;
+            const changeQuestionBtn = document.getElementById('changeQuestionBtn');
+            const fiftyFiftyBtn = document.getElementById('fiftyFiftyBtn');
+            const timeExtensionBtn = document.getElementById('timeExtensionBtn');
+            const quitBtn = document.getElementById('quitBtn');
+            
+            console.log('Updating lifeline availability for round:', currentRound);
+            console.log('Current lifeline states:', gameState.lifelines);
+            
+            // Reset all button classes
+            [changeQuestionBtn, fiftyFiftyBtn, timeExtensionBtn].forEach(btn => {
+                if (btn) {
+                    btn.classList.remove('used', 'disabled', 'available');
+                }
+            });
+
+            // Change Question - Available in Rounds 1-2 only
+            if (changeQuestionBtn) {
+                if (currentRound <= 2) {
+                    if (gameState.lifelines.changeQuestion) {
+                        changeQuestionBtn.classList.add('available');
+                        changeQuestionBtn.innerHTML = '🔄 Change Question';
+                    } else {
+                        changeQuestionBtn.classList.add('used');
+                        changeQuestionBtn.innerHTML = '🔄 Used';
+                    }
+                } else {
+                    changeQuestionBtn.classList.add('disabled');
+                    changeQuestionBtn.innerHTML = '🔄 Not Available<br><small>(Rounds 1-2 only)</small>';
+                }
+            }
+
+            // 50:50 - Available in Rounds 1-2 only
+            if (fiftyFiftyBtn) {
+                if (currentRound <= 2) {
+                    if (gameState.lifelines.fiftyFifty) {
+                        fiftyFiftyBtn.classList.add('available');
+                        fiftyFiftyBtn.innerHTML = '💡 50:50';
+                    } else {
+                        fiftyFiftyBtn.classList.add('used');
+                        fiftyFiftyBtn.innerHTML = '💡 Used';
+                    }
+                } else {
+                    fiftyFiftyBtn.classList.add('disabled');
+                    fiftyFiftyBtn.innerHTML = '💡 Not Available<br><small>(Rounds 1-2 only)</small>';
+                }
+            }
+
+            // Time Extension - Available from Round 3 onwards
+            if (timeExtensionBtn) {
+                if (currentRound >= 3) {
+                    if (gameState.lifelines.timeExtension) {
+                        timeExtensionBtn.classList.add('available');
+                        timeExtensionBtn.innerHTML = '⏰ Time Extension<br><small>(+2 minutes)</small>';
+                    } else {
+                        timeExtensionBtn.classList.add('used');
+                        timeExtensionBtn.innerHTML = '⏰ Used';
+                    }
+                } else {
+                    timeExtensionBtn.classList.add('disabled');
+                    timeExtensionBtn.innerHTML = '⏰ Time Extension<br><small>(Available Round 3)</small>';
+                }
+            }
+
+            // Quit button availability (Rounds 1-3 only)
+            if (quitBtn) {
+                if (currentRound === 4) {
+                    quitBtn.disabled = true;
+                    quitBtn.textContent = "NO QUIT (Round 4)";
+                    quitBtn.style.opacity = '0.5';
+                } else {
+                    quitBtn.disabled = false;
+                    quitBtn.textContent = "QUIT GAME";
+                    quitBtn.style.opacity = '1';
+                }
+            }
+            
+            console.log('Lifeline availability updated successfully');
+        }
+
+        // Answer selection
+        function selectAnswer(index) {
+            if (gameState.answerLocked || gameState.gameEnded) {
+                return;
+            }
+
+            // Check if option is disabled (by 50:50)
+            const selectedOption = document.querySelectorAll('.option')[index];
+            if (selectedOption && selectedOption.classList.contains('option-disabled')) {
+                return;
+            }
+
+            // Clear previous selections
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Select new option
+            if (selectedOption) {
+                selectedOption.classList.add('selected');
+                gameState.selectedAnswer = index;
+                document.getElementById('confirmBtn').disabled = false;
+            }
+        }
+
+        // Answer confirmation with proper scoring
+        function confirmAnswer() {
+            if (gameState.selectedAnswer === null || gameState.answerLocked) return;
+            
+            gameState.answerLocked = true;
+            clearInterval(gameState.timer);
+            
+            const currentQ = currentQuestions[gameState.currentQuestion - 1];
+            const isCorrect = gameState.selectedAnswer === currentQ.correct;
+            
+            // Show correct/incorrect
+            document.querySelectorAll('.option').forEach((opt, index) => {
+                opt.classList.add('option-disabled');
+                if (index === currentQ.correct) {
+                    opt.classList.add('correct');
+                } else if (index === gameState.selectedAnswer && !isCorrect) {
+                    opt.classList.add('incorrect');
+                }
+            });
+
+            if (isCorrect) {
+                gameState.score = scoreValues[gameState.currentQuestion - 1];
+                updateScoreLadder();
+                
+                setTimeout(() => {
+                    if (gameState.currentQuestion === 15) {
+                        // Game completed successfully
+                        const bonus = calculateLifelineBonus();
+                        const finalScore = gameState.score + bonus;
+                        endGame(`🏆 ULTIMATE CHAMPION! You've conquered all 15 questions! Base: ${gameState.score} + Bonus: ${bonus} = ${finalScore} points!`);
+                    } else if (gameState.currentQuestion === 12) {
+                        // Show decision screen after Round 3
+                        showDecisionScreen();
+                    } else {
+                        nextQuestion();
+                    }
+                }, 2000);
+            } else {
+                setTimeout(() => {
+                    let safeScore;
+                    if (gameState.currentRound === 4) {
+                        safeScore = 55; // Drop to Round 2 safe score
+                        gameState.score = safeScore;
+                        endGame(`❌ Wrong answer in Round 4! You drop to the Round 2 safe score of ${safeScore} points.`);
+                    } else {
+                        safeScore = getSafeScore();
+                        gameState.score = safeScore;
+                        endGame(`❌ Wrong answer! You take home ${safeScore} points.`);
+                    }
+                }, 2000);
+            }
+        }
+
+        // Decision screen for Round 4 choice
+        function showDecisionScreen() {
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+            }
+            document.getElementById('decisionScreen').classList.remove('hidden');
+            
+            let decisionTime = 120;
+            const decisionTimerElement = document.getElementById('decisionTimer');
+            
+            gameState.decisionTimer = setInterval(() => {
+                decisionTime--;
+                const minutes = Math.floor(decisionTime / 60);
+                const seconds = decisionTime % 60;
+                if (decisionTimerElement) {
+                    decisionTimerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+                
+                if (decisionTime <= 0) {
+                    clearInterval(gameState.decisionTimer);
+                    quitSafely();
+                }
+            }, 1000);
+        }
+
+        function quitSafely() {
+            if (gameState.decisionTimer) {
+                clearInterval(gameState.decisionTimer);
+            }
+            document.getElementById('decisionScreen').classList.add('hidden');
+            const bonus = calculateLifelineBonus();
+            const finalScore = gameState.score + bonus;
+            endGame(`🚪 Smart decision! You quit safely with ${gameState.score} points + ${bonus} bonus = ${finalScore} points total!`);
+        }
+
+        function riskRound4() {
+            if (gameState.decisionTimer) {
+                clearInterval(gameState.decisionTimer);
+            }
+            document.getElementById('decisionScreen').classList.add('hidden');
+            nextQuestion();
+        }
+
+        // Next question progression
+        function nextQuestion() {
+            if (gameState.currentQuestion >= 15) {
+                const bonus = calculateLifelineBonus();
+                const finalScore = gameState.score + bonus;
+                endGame(`🏆 Congratulations! Final Score: ${gameState.score} + ${bonus} bonus = ${finalScore} points!`);
+                return;
+            }
+
+            gameState.currentQuestion++;
+            gameState.timeExtended = false;
+            gameState.answerLocked = false;
+            
+            displayQuestion();
+            updateUI();
+            startTimer();
+        }
+
+        // Safe score calculation
+        function getSafeScore() {
+            if (gameState.currentQuestion >= 13) return 130; // Round 3 safe score
+            if (gameState.currentQuestion >= 8) return 55;   // Round 2 safe score
+            if (gameState.currentQuestion >= 4) return 15;   // Round 1 safe score
+            return 0;
+        }
+
+        // Lifeline bonus calculation
+        function calculateLifelineBonus() {
+            let bonus = 0;
+            if (gameState.lifelines.changeQuestion) bonus += 10;
+            if (gameState.lifelines.fiftyFifty) bonus += 10;
+            if (gameState.lifelines.timeExtension) bonus += 10;
+            return bonus;
+        }
+
+        // Quit game functionality
+        function quitGame() {
+            if (!gameState.gameStarted || gameState.gameEnded) {
+                return;
+            }
+
+            if (gameState.currentRound === 4) {
+                showNotification("❌ You cannot quit during Round 4! You must complete all remaining questions.", true);
+                return;
+            }
+            
+            const currentSafeScore = getSafeScore();
+            const bonus = calculateLifelineBonus();
+            const totalScore = currentSafeScore + bonus;
+            
+            if (confirm(`Are you sure you want to quit? You'll take home ${currentSafeScore} points + ${bonus} lifeline bonus = ${totalScore} points total.`)) {
+                if (gameState.timer) {
+                    clearInterval(gameState.timer);
+                }
+                gameState.score = currentSafeScore;
+                endGame(`🚪 You quit and took home ${currentSafeScore} points + ${bonus} bonus = ${totalScore} points total!`);
+            }
+        }
+
+        // End game with proper cleanup
+        function endGame(message) {
+            gameState.gameEnded = true;
+            gameState.gameStarted = false;
+            
+            // Clear all timers
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+                gameState.timer = null;
+            }
+            if (gameState.decisionTimer) {
+                clearInterval(gameState.decisionTimer);
+                gameState.decisionTimer = null;
+            }
+            
+            const bonus = calculateLifelineBonus();
+            const finalScore = gameState.score + bonus;
+            
+            const finalScoreElement = document.getElementById('finalScore');
+            const gameResultElement = document.getElementById('gameResult');
+            
+            if (finalScoreElement) {
+                finalScoreElement.textContent = `Final Score: ${finalScore} Points`;
+            }
+            
+            if (gameResultElement) {
+                gameResultElement.innerHTML = `<p style="font-size: 18px; text-align: center;">${message}</p>`;
+                
+                // Performance evaluation
+                let performance = "";
+                if (finalScore >= 180) performance = "🏆 BUSINESS LEGEND! Outstanding mastery!";
+                else if (finalScore >= 150) performance = "🥈 BUSINESS EXPERT! Excellent knowledge!";
+                else if (finalScore >= 100) performance = "🥉 BUSINESS PROFESSIONAL! Great performance!";
+                else if (finalScore >= 60) performance = "📈 ASPIRING MANAGER! Keep learning!";
+                else performance = "📚 BUSINESS STUDENT! Practice makes perfect!";
+                
+                gameResultElement.innerHTML += `<p style="margin-top: 15px; font-weight: bold; color: #ff6b35;">${performance}</p>`;
+                
+                if (bonus > 0) {
+                    gameResultElement.innerHTML += `<p style="margin-top: 10px; color: #2ecc71;">Lifeline Bonus: +${bonus} points</p>`;
+                }
+            }
+            
+            document.getElementById('endScreen').classList.remove('hidden');
+        }
+
+        // Timer functionality
+        function startTimer() {
+            // Clear any existing timer
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+            }
+            
+            // Reset timer styling
+            const timerElement = document.getElementById('timer');
+            if (timerElement) {
+                timerElement.classList.remove('warning');
+            }
+            
+            gameState.timer = setInterval(() => {
+                if (gameState.gameEnded || !gameState.gameStarted) {
+                    clearInterval(gameState.timer);
+                    return;
+                }
+
+                gameState.timeLeft--;
+                updateTimer();
+                
+                // Add warning style when time is low
+                if (gameState.timeLeft <= 10 && timerElement) {
+                    timerElement.classList.add('warning');
+                }
+                
+                // Time's up
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timer);
+                    
+                    if (gameState.currentRound === 4) {
+                        gameState.score = 55; // Drop to Round 2 safe score
+                        endGame(`⏰ Time's up in Round 4! You drop to 55 points.`);
+                    } else {
+                        const safeScore = getSafeScore();
+                        gameState.score = safeScore;
+                        endGame(`⏰ Time's up! You take home ${safeScore} points.`);
+                    }
+                }
+            }, 1000);
+        }
+
+        // Timer display update
+        function updateTimer() {
+            const timerElement = document.getElementById('timer');
+            if (timerElement && gameState.timeLeft >= 0) {
+                timerElement.textContent = `Time: ${gameState.timeLeft}s`;
+                
+                if (gameState.timeLeft > 10) {
+                    timerElement.classList.remove('warning');
+                }
+            }
+        }
+
+        // UI updates
+        function updateUI() {
+            const currentScoreElement = document.getElementById('currentScore');
+            const questionNumElement = document.getElementById('questionNum');
+            
+            if (currentScoreElement) {
+                currentScoreElement.textContent = gameState.score;
+            }
+            
+            if (questionNumElement) {
+                questionNumElement.textContent = gameState.currentQuestion;
+            }
+            
+            updateScoreLadder();
+        }
+
+        // Score ladder display
+        function updateScoreLadder() {
+            document.querySelectorAll('.ladder-item').forEach((item) => {
+                const questionNum = parseInt(item.dataset.question);
+                item.classList.remove('current', 'completed');
+                
+                if (questionNum < gameState.currentQuestion) {
+                    item.classList.add('completed');
+                } else if (questionNum === gameState.currentQuestion) {
+                    item.classList.add('current');
+                }
+            });
+        }
+
+        // Complete game restart
+        function restartGame() {
+            // Clear all timers
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+                gameState.timer = null;
+            }
+            if (gameState.decisionTimer) {
+                clearInterval(gameState.decisionTimer);
+                gameState.decisionTimer = null;
+            }
+            
+            // Reset game state completely
+            gameState = {
+                currentQuestion: 1,
+                score: 0,
+                timeLeft: 45,
+                gameStarted: false,
+                gameEnded: false,
+                selectedAnswer: null,
+                timer: null,
+                decisionTimer: null,
+                lifelines: {
+                    changeQuestion: true,
+                    fiftyFifty: true,
+                    timeExtension: true
+                },
+                currentRound: 1,
+                timeExtended: false,
+                customQuestions: gameState.customQuestions,
+                answerLocked: false
+            };
+            
+            // Reset questions to custom or default
+            if (gameState.customQuestions) {
+                currentQuestions = [...gameState.customQuestions];
+            } else {
+                currentQuestions = [...defaultQuestions];
+            }
+            
+            // Reset UI screens
+            document.getElementById('endScreen').classList.add('hidden');
+            document.getElementById('decisionScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+            
+            // Reset all UI elements
+            const timerElement = document.getElementById('timer');
+            if (timerElement) {
+                timerElement.classList.remove('warning', 'extended');
+                timerElement.textContent = 'Time: 45s';
+            }
+            
+            const confirmBtn = document.getElementById('confirmBtn');
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+            }
+            
+            const quitBtn = document.getElementById('quitBtn');
+            if (quitBtn) {
+                quitBtn.disabled = false;
+                quitBtn.textContent = 'QUIT GAME';
+                quitBtn.style.opacity = '1';
+            }
+            
+            // Clear any notifications
+            document.querySelectorAll('.notification').forEach(notification => {
+                notification.remove();
+            });
+            
+            // Reset score display
+            const currentScoreElement = document.getElementById('currentScore');
+            const questionNumElement = document.getElementById('questionNum');
+            
+            if (currentScoreElement) {
+                currentScoreElement.textContent = '0';
+            }
+            if (questionNumElement) {
+                questionNumElement.textContent = '1';
+            }
+            
+            // Reset score ladder
+            document.querySelectorAll('.ladder-item').forEach((item, index) => {
+                item.classList.remove('current', 'completed');
+                if (parseInt(item.dataset.question) === 1) {
+                    item.classList.add('current');
+                }
+            });
+        }
+
+        // Initialize game when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing game...');
+            
+            // Set default questions
+            currentQuestions = [...defaultQuestions];
+            
+            // Initialize UI
+            updateUI();
+            
+            // Set initial game state
+            gameState.timeLeft = defaultQuestions[0].timeLimit;
+            updateTimer();
+            
+            // Initialize lifelines after DOM is ready
+            setTimeout(() => {
+                initializeLifelines();
+            }, 100);
+            
+            console.log('Game initialized successfully');
+        });
+    </script>
+</body>
+</html>
